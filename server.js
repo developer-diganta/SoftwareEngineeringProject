@@ -33,8 +33,8 @@ const author = (req, res, next) => {
                 res.json("VF")
             }
             else {
-                console.log(decoded.id)
-                if(req.userId !== decoded.id) res.json("VF");
+                console.log(req.body.userId)
+                if(req.body.userId !== decoded.id) res.json("VF");
                 console.log("Done");
                 console.log(req.body)
                 next();
