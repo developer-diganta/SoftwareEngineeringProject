@@ -21,20 +21,22 @@ connection.connect();
 
 
 const author = (req, res, next) => {
-    const token =  req.body.user?req.body.user.data.token:null;
+    const token =  req.body?req.body.token:null;
     if(!token){
         console.log("need token!")
         res.send("Need a token");
     }
     else{
-        jwt.verify(token, process.env.KEY, (error, decoded) => {
+        jwt.verify(token, "Hello", (error, decoded) => {
             if(error){
                 console.log("Verification Failed");
                 res.json("VF")
             }
-            else{
-                req.userId = decoded.id;
-                console.log("Done")
+            else {
+                console.log(decoded.id)
+                if(req.userId !== decoded.id) res.json("VF");
+                console.log("Done");
+                console.log(req.body)
                 next();
             }
         })
@@ -53,9 +55,31 @@ app.get('/', (req, res) => {
     res.send('Server Running');
 });
 
-app.post('/login', author, (req, res) => {
-
+app.post('/login',(req, res) => {
+    const userId = req.body.userId;
+    const password = req.body.password;
+    const query = `SELECT * FROM users WHERE userId = '${userId}' AND password = '${password}'`;
+    connection.query(query, (error, results) => {
+        if (error) {
+            console.log(error);
+            res.send("Error");
+        }
+        else {
+            if (results.length > 0) {
+                const token = jwt.sign({ id: userId }, process.env.KEY);
+                res.json({
+                    token: token,
+                    userId: userId
+                });
+            }
+            else {
+                res.send("Invalid Credentials");
+            }
+        }
+    });
 });
+
+
 
 app.post('/signup', (req, res) => {
     const { username, password, email, phone_number } = req.body;
@@ -71,7 +95,7 @@ app.post('/signup', (req, res) => {
                     res.send("Error");
                 }
                 else {
-                    const token = jwt.sign({ id: result.insertId },"Hello");
+                    const token = jwt.sign({ id: username },"Hello");
                     res.json({ username, token });
                 };
             });
@@ -80,12 +104,13 @@ app.post('/signup', (req, res) => {
     })
 });
 
-app.post('/profile', async (req, res) => {
-    console.log(req.body)
+app.post('/profile', author, async (req, res) => {
+    // console.log(req.body)
     const data = req.body;
+    console.log("herere")
     var c = 0;// update with each query run
     for (var x in data) {
-        if (x !== 'userId') {            
+        if (x !== 'userId' && x!== 'token' ) {            
              connection.query(`UPDATE users SET ${x} = '${data[x]}' WHERE user_id = '${data.userId}';`, (err, result) => {
                 if (err) {
                     console.log(err);
@@ -118,15 +143,94 @@ app.post('/request', (req, res) => {
     });
 });
 
-app.post('/friends', (req, res) => {
+app.post('/allies', (req, res) => {
+    const userId = req.userId;
+    const query = `SELECT allie_id, name from allies,users WHERE allies.user_id = ${userId} AND allies.allie_id = users.id;`;
+    connection.query(query, (err, result) => {
+        if (err) {
+            console.log(err);
+            res.send("Error");
+        }
+        else {
+            res.send(result);
+        }
+    });
 });
 
-app.post('/posts', (req, res) => {
 
+app.post("/sendrequest", (req, res) => {
+    const userId = req.body.userId;
+    const allieId = req.body.allieId;
+    const query = `INSERT INTO requests (user_id, allie_id) VALUES ('${userId}', '${allieId}');`;
+    connection.query(query, (err, result) => {
+        if (err) {
+            console.log(err);
+            res.send("Error");
+        }
+        else {
+            res.send("Success");
+        }
+    });
+});
+
+app.post("/acceptrequest", (req, res) => {
+    const userId = req.body.userId;
+    const allieId = req.body.allieId;
+    const query = `INSERT INTO allies (user_id, allie_id) VALUES ('${userId}', '${allieId}');`;
+    connection.query(query, (err, result) => {
+        if (err) {
+            console.log(err);
+            res.send("Error");
+        }
+        else {
+            const query2 = `DELETE FROM requests WHERE user_id = '${userId}' AND allie_id = '${allieId}';`;
+            connection.query(query2, (err, result) => {
+                if (err) {
+                    console.log(err);
+                    res.send("Error");
+                }
+                else {
+                    res.send("Success");
+                }
+            });
+        }
+    });
+});
+
+
+app.post('/posts', (req, res) => {
+    const userId = req.userId;
+    const query = `SELECT * from posts WHERE user_id = ${userId};`;
+    connection.query(query, (err, result) => {
+        if (err) {
+            console.log(err);
+            res.send("Error");
+        }
+        else {
+            res.send(result);
+        }
+    });
 });
 
 app.post('/home', (req, res) => {
+    const query = `SELECT * from posts;`;
+    connection.query(query, (err, result) => {
+        if (err) {
+            console.log(err);
+            res.send("Error");
+        }
+        else {
+            res.send(result);
+        }
+    });
 });
+
+
+
+
+
+
+
 
 app.post('/admin', (req, res) => {
 });
