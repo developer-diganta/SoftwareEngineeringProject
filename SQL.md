@@ -29,3 +29,17 @@ ADD CONSTRAINT `userId`
   REFERENCES `social_portal`.`sign_in` (`user_id`)
   ON DELETE RESTRICT
   ON UPDATE RESTRICT;
+
+CREATE TABLE `social_portal`.`requests` (
+  `user_id` VARCHAR(15) NOT NULL,
+  `alliie_id` VARCHAR(15) NOT NULL,
+  PRIMARY KEY (`user_id`, `alliie_id`));
+
+CREATE TABLE `social_portal`.`posts` (
+  `user_id` VARCHAR(15) NOT NULL,
+  `post_react` INT NOT NULL DEFAULT 0,
+  `post_photo` VARCHAR(3000) NULL,
+  `post_text` VARCHAR(200) NULL,
+  `post_id` INT NOT NULL AUTO_INCREMENT,
+  PRIMARY KEY (`user_id`),
+  UNIQUE INDEX `post_id_UNIQUE` (`post_id` ASC) VISIBLE);
