@@ -66,7 +66,7 @@ app.post('/login',(req, res) => {
         }
         else {
             if (results.length > 0) {
-                const token = jwt.sign({ id: userId }, process.env.KEY);
+                const token = jwt.sign({ id: userId }, "Hello");
                 res.json({
                     token: token,
                     userId: userId
@@ -104,7 +104,7 @@ app.post('/signup', (req, res) => {
     })
 });
 
-app.post('/profile', author, async (req, res) => {
+app.post('/editprofile', author, async (req, res) => {
     // console.log(req.body)
     const data = req.body;
     console.log("herere")
@@ -125,8 +125,22 @@ app.post('/profile', author, async (req, res) => {
         }
     }
     console.log(c)
-    res.json({fields_updated: c});
+    res.json("Success");
 });
+
+app.post("/showprofile", (req, res) => {
+    const userId = req.body.userId;
+    connection.query(`SELECT * FROM users WHERE user_id = '${userId}'`, (err, result) => {
+        if (err) {
+            console.log(err);
+            res.send("Error");
+        }
+        else {
+            console.log(result)
+            res.json(result);
+        }
+    });
+})
 
 
 app.post('/request', (req, res) => {
@@ -198,6 +212,21 @@ app.post("/acceptrequest", (req, res) => {
 });
 
 
+app.post("/deleterequest", (req, res) => {
+    const userId = req.body.userId;
+    const allieId = req.body.allieId;
+    const query = `DELETE FROM requests WHERE user_id = '${userId}' AND allie_id = '${allieId}';`;
+    connection.query(query, (err, result) => {
+        if (err) {
+            console.log(err);
+            res.send("Error");
+        }
+        else {
+            res.send("Success");
+        }
+    });
+});
+
 app.post('/posts', (req, res) => {
     const userId = req.userId;
     const query = `SELECT * from posts WHERE user_id = ${userId};`;
@@ -211,6 +240,42 @@ app.post('/posts', (req, res) => {
         }
     });
 });
+
+
+app.post('/addpost', (req, res) => {
+    const userId = req.body.userId;
+    const postReact = req.body.postReact;
+    const postPhoto = req.body.postPhoto;
+    const postText = req.body.postText;
+    const postId = req.body.postId;
+    const query = `INSERT INTO posts (user_id, post_react, post_photo, post_text, post_id) VALUES ('${userId}', '${postReact}', '${postPhoto}', '${postText}', '${postId}');`;
+    connection.query(query, (err, result) => {
+        if (err) {
+            console.log(err);
+            res.send("Error");
+        }
+        else {
+            res.send("Success");
+        }
+    });
+});
+
+app.post("/deletepost", (req, res) => {
+    const userId = req.body.userId;
+    const postId = req.body.postId;
+    const query = `DELETE FROM posts WHERE user_id = '${userId}' AND post_id = '${postId}';`;
+    connection.query(query, (err, result) => {
+        if (err) {
+            console.log(err);
+            res.send("Error");
+        }
+        else {
+            res.send("Success");
+        }
+    });
+});
+
+
 
 app.post('/home', (req, res) => {
     const query = `SELECT * from posts;`;
