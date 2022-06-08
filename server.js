@@ -144,16 +144,29 @@ app.post("/showprofile", (req, res) => {
 
 
 app.post('/request', (req, res) => {
-    const userId = req.userId;
-    const query = `SELECT allie_id, name from requests,users WHERE requests.user_id = ${userId} AND requests.allie_id = users.id;`;
+    const userId = req.body.userId;
+    console.log(userId);
+    const query = `SELECT allie_id, name from requests,users WHERE requests.user_id = '${userId}' AND requests.allie_id = users.user_id;`;
     connection.query(query, (err, result) => {
         if (err) {
             console.log(err);
             res.send("Error");
         }
         else {
-            
-            res.send(result);
+            console.log("*", result[0].allie_id);
+            const id = result[0].allie_id;
+            const query = `select * from users where user_id = '${id}';`;
+            connection.query(query, (err, result) => {
+                if(err) {
+                    console.log(err);
+                    res.send("Error");
+                }
+                else{
+                    console.log(query, result);
+                    res.send(result);
+                }
+            })
+            // res.send(result);
         }
     });
 });
@@ -248,8 +261,8 @@ app.post('/addpost', (req, res) => {
     const postReact = req.body.postReact;
     const postPhoto = req.body.postPhoto;
     const postText = req.body.postText;
-    const postId = req.body.postId;
-    const query = `INSERT INTO posts (user_id, post_react, post_photo, post_text, post_id) VALUES ('${userId}', '${postReact}', '${postPhoto}', '${postText}', '${postId}');`;
+    // const postId = req.body.postId;
+    const query = `INSERT INTO posts (user_id, post_react, post_photo, post_text) VALUES ('${userId}', '${postReact}', '${postPhoto}', '${postText}');`;
     connection.query(query, (err, result) => {
         if (err) {
             console.log(err);
